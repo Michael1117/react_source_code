@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  
+</head>
+
+<body>
+  <button id="btn1">按钮</button>
+  <!-- <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script> -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/2.2.4/jquery.js"></script>
+  <script>
+    var $document = $(document);
+    //console.log($document)
+
+    
+    $document.delegate("#btn1", "click.foo.bar", function (event) {
+      console.log('click-1')
+    });
+
+    $document.delegate("#btn1", "click.test", function (event) {
+      console.log('click-2')
+    });
+
+    $document.delegate("#btn1", "click.test.foo", function (event) {
+      console.log('click-3')
+    })
+  </script>
+</body>
+
+</html>
