@@ -17,6 +17,13 @@ class TextUnit extends Unit {
     this._reactid = reactid;
     return `<span data-reactid="${reactid}">${this._currentElement}</span>`
   }
+  update(nextElement) {
+    if (this._currentElement !== nextElement) {
+      this._currentElement = nextElement
+      $(`[data-reactid="${this._reactid}"]`).html(this._currentElement);
+      }
+    }
+    
 }
 
 /* 
@@ -32,6 +39,10 @@ let element = React.createElement('button',
 {type:'button', props: {id: 'sayHello'}, children: ['say', {type: '',{}, 'Hello'}]}
 */
 class NativeUnit extends Unit {
+  update(nextElement) {
+    let oldProps = this._currentElement.props;
+    let newProps = nextElement.props;
+  }
   getMarkUp(reactid) {
     this._reactid = reactid;
     let {
@@ -84,7 +95,22 @@ class CompositeUnit extends Unit {
     // 新的属性对象
     let nextProps = this._currentElement.props;
     if (this._componentInstance.shouldComponentUpdate && !this._componentInstance.shouldComponentUpdate(nextProps, nextState)) {
-      return true
+      return;
+    }
+    // 下面要进行比较更新了  先得到上次渲染的单元
+    let preRenderedUnitInstance = this._renderedUnitInstance
+    console.log(preRenderedUnitInstance)
+    let preRenderedElement = preRenderedUnitInstance._currentElement
+    let nextRenderElement = this._componentInstance.render()
+    // 如果新旧两个元素类型一样，则可以进行深度比较，如果不一样，直接干掉老的元素，新建新的元素
+    if (shouldDeepCompare(preRenderedElement, nextRenderElement)) {
+      // 如果可以进行深比较，则把更新的工作交给上次渲染出来的那个
+      preRenderedUnitInstance.update(nextRenderElement);
+      this._componentInstance.componentDidUpdate&& this._componentInstance.componentDidUpdate()
+    } else {
+      this._renderedUnitInstance = createUnit(nextRenderElement)
+      let nextMarkUp = this._renderedUnitInstance.getMarkUp()
+      $(`[data-reactid="${this._reactid}"]`).replaceWith(nextMarkUp)
     }
   }
   getMarkUp(reactid) {
@@ -95,18 +121,39 @@ class CompositeUnit extends Unit {
     } = this._currentElement
     
     let componentInstance = this._componentInstance = new Component(props)
-    let renderElement = componentInstance.render();
+    // 让组件的实例的currentUnit属性等于当前的unit
+    componentInstance._currentUnit = this;
+    // 有组件将要渲染的函数的话执行
+    componentInstance.componentWillMount && componentInstance.componentWillMount();
+    // 调用组件的render方法，获得要渲染的元素
+    let renderedElement = componentInstance.render()
+    // 得到这个元素对应的unit
+    let renderedUnitInstance = this._renderedUnitInstance = createUnit(renderedElement);
     
-    let renderedUnit = createUnit(renderElement)
-    console.log(renderedUnit)
+    // 通过unit可以获得
+    let renderedMarkUp = renderedUnitInstance.getMarkUp(this._reactid);
+    // 在这个时候绑定一个事件
     $(document).on('mounted', () => {
-      componentInstance.componentDidMount && componentInstance.componentDidMount()
+      componentInstance.componentDidMount && componentInstance.componentDidMount();
     })
-    return renderedUnit.getMarkUp(this._reactid)
-
+    return renderedMarkUp;
   }
 }
+// 判断两个元素的类型一不一样
+function shouldDeepCompare(oldElement, newElement) {
+  if (oldElement != null && newElement != null) {
+    let oldType = typeof oldElement;
+    let newType = typeof newElement;
+    if ((oldType==='string' || oldType === 'number') && (newType==='string' || newType === 'number')) {
+      return true
+    }
 
+    if (oldElement instanceof Element && newElement instanceof Element) {
+      return oldElement.type == newElement.type;
+    }
+  }
+  return false;
+}
 function createUnit(element) {
   if (typeof element === 'string' || typeof element === 'number') {
     return new TextUnit(element)

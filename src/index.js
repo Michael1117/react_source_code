@@ -18,16 +18,19 @@ class Counter extends React.Component{
   shouldComponentUpdate(nextState, nextProps) {
     return true
   }
-  increment = () => {
-    /* this.setState({
-      number: this.state.number+1
-    }) */
-    return this.state.number;
+  componentDidUpdate() {
+    console.log('Counter componentDidUpdate')
   }
+ /*  increment = () => {
+    
+    return this.state.number;
+  } */
   render() {
-    let p = React.createElement('p', { style: {color: 'red'}}, this.props.name,  this.state.number);
+    console.log('render')
+   /*  let p = React.createElement('p', { style: {color: 'red'}}, this.props.name,  this.state.number);
     let button = React.createElement('button', {onClick: this.increment}, '+')
-    return React.createElement('div', {id:'counter'}, p, button)
+    return React.createElement('div', {id:'counter'}, p, button) */
+    return this.state.number;
   }
 }
 
