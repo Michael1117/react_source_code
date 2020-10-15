@@ -50,8 +50,29 @@ class NativeUnit extends Unit {
   }
   // 此处要把新的子节点传过来， 和老的子节点进行对比，然后找出差异
   updateDOMChildren(newChildrenElements) {
+    updateDepth++;
     this.diff(diffQueue, newChildrenElements);
-    console.log(diffQueue)
+    //console.log(diffQueue)
+    updateDepth--;
+    if (updateDepth === 0) {
+      this.patch(diffQueue);
+      diffQueue = [];
+    }
+  }
+  patch(diffQueue) {
+    let deleteChildren = [];  // 这里放着所有将要删除的节点
+    let deleteMap = {}; // 这里存放能复用的节点
+    for (let i = 0; i < diffQueue.length; i++) {
+      let difference = diffQueue[i];
+      if (difference.type === types.MOVE || difference.type === types.REMOVE) {
+        let fromIndex = difference.fromIndex;
+        let oldChild = $(difference.parentNode.children().get(fromIndex));
+        deleteMap[fromIndex] = oldChild;
+        deleteChildren.push(oldChild)
+
+      }
+    }
+    $.each(deleteChildren, (idx, item) => $(item).remove())
   }
   diff(diffQueue, newChildrenElements) {
     // 1 生成一个map， key=老的unit
