@@ -52,7 +52,7 @@ class NativeUnit extends Unit {
   updateDOMChildren(newChildrenElements) {
     updateDepth++;
     this.diff(diffQueue, newChildrenElements);
-    //console.log(diffQueue)
+    console.log(diffQueue)
     updateDepth--;
     if (updateDepth === 0) {
       this.patch(diffQueue);
@@ -115,6 +115,15 @@ class NativeUnit extends Unit {
         }
         lastIndex = Math.max(lastIndex, oldChildUnit._mountIndex)       
       } else {  // 不相等  新节点
+        if (oldChildUnit) {
+          diffQueue.push({
+            parentId: this._reactid,
+            parentNode: $(`[data-reactid="${this._reactid}"]`),
+            type: types.REMOVE,
+            fromIndex: oldChildUnit._mountIndex
+          })
+          $(document).undelegate(`.${oldChildUnit._reactid}`);
+        }
         diffQueue.push({
           parentId: this._reactid,
           parentNode: $(`[data-reactid="${this._reactid}"]`),

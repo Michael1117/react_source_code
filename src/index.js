@@ -26,7 +26,7 @@ class Counter extends React.Component{
       )
     }
     return React.createElement('ul', {id: 'newCounter'},
-      React.createElement('li', { key: 'A' }, 'A1'),
+      React.createElement('span', { key: 'A' }, 'A1'),
       React.createElement('li', { key: 'C' }, 'C1'),
       React.createElement('li', { key: 'B' }, 'B1'),
       React.createElement('li', { key: 'E' }, 'E1'),
