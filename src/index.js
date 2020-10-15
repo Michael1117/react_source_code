@@ -2,34 +2,36 @@ import React from './react';
 
 class Counter extends React.Component{
   constructor(props) {
-    super(props)
-    this.state = {number: 0}
+    super(props);
+    this.state = {
+      odd: true
+    }
   }
-  componentWillMount() {
-    console.log('Counter componentWillMount')
-  }
-
   componentDidMount() {
-    //console.log('Counter componentDidMount')
-    setInterval(() => {
-      this.setState({number: this.state.number + 1})
-    }, 1000)
+    setTimeout(() => {
+      this.setState({odd: !this.state.odd})
+    })
   }
-  shouldComponentUpdate(nextState, nextProps) {
-    return true
-  }
-  componentDidUpdate() {
-    console.log('Counter componentDidUpdate')
-  }
+  
   handleClick = () => {
     this.setState({number: this.state.number + 1})
   }
   render() {
-    //console.log('render')
-    let p = React.createElement('p', { },  this.state.number);
-    let button = React.createElement('button', {onClick: this.handleClick}, '+')
-    return React.createElement('div', {style:{backgroundColor: this.state.number % 2 == 0 ? "red":"green"}}, p, button)
-    
+    if (this.state.odd) {
+      return React.createElement('ul', {id: 'oldCounter'},
+        React.createElement('li', { key: 'A' }, 'A'),
+        React.createElement('li', { key: 'B' }, 'B'),
+        React.createElement('li', { key: 'C' }, 'C'),
+        React.createElement('li', { key: 'D' }, 'D'),
+      )
+    }
+    return React.createElement('ul', {id: 'newCounter'},
+      React.createElement('li', { key: 'A' }, 'A1'),
+      React.createElement('li', { key: 'C' }, 'C1'),
+      React.createElement('li', { key: 'B' }, 'B1'),
+      React.createElement('li', { key: 'E' }, 'E1'),
+      React.createElement('li', { key: 'F' }, 'F1'),
+    )
   }
 }
 
