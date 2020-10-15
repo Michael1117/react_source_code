@@ -1,5 +1,5 @@
 import {Element} from './element'
-import $ from 'jquery'
+import $, { type } from 'jquery'
 import types from './types'
 let diffQueue = [];    // 差异队列
 let updateDepth = 0;  // 更新级别
@@ -60,7 +60,7 @@ class NativeUnit extends Unit {
     }
   }
   patch(diffQueue) {
-    let deleteChildren = [];  // 这里放着所有将要删除的节点
+    let deleteChildren = []; // 这里放着所有将要删除的节点
     let deleteMap = {}; // 这里存放能复用的节点
     for (let i = 0; i < diffQueue.length; i++) {
       let difference = diffQueue[i];
@@ -73,6 +73,23 @@ class NativeUnit extends Unit {
       }
     }
     $.each(deleteChildren, (idx, item) => $(item).remove())
+    for (let i = 0; i < diffQueue.length; i++) {
+      let difference = diffQueue[i]
+      switch (difference.type) { 
+        case types.INSERT:
+          this.insertChildAt(difference.parentNode, difference.toIndex, $(difference.markUp))
+          break;
+        case types.MOVE:
+          this.insertChildAt(difference.parentNode, difference.toIndex, deleteMap[difference.fromIndex])
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  insertChildAt(parentNode, index, newNode) {
+    let oldChild = parentNode.children().get(index)
+    oldChild?newNode.insertBefore(oldChild):newNode.appendTo(parentNode)
   }
   diff(diffQueue, newChildrenElements) {
     // 1 生成一个map， key=老的unit

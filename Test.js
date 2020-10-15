@@ -19,3 +19,12 @@ let result = attr.replace(/[A-Z]/g, matched => {
 
 
 console.log(result)
+
+switch (key) {
+  case value:
+    
+    break;
+
+  default:
+    break;
+}
