@@ -2,6 +2,8 @@ import {
   Element,
 } from './element'
 import $ from 'jquery'
+let diffQueue;    // 差异队列
+let updateDepth = 0;  // 更新级别
 class Unit {
   constructor(element) {
     // 挂载到所有属性上的都以_开头
@@ -40,8 +42,76 @@ let element = React.createElement('button',
 */
 class NativeUnit extends Unit {
   update(nextElement) {
+    console.log(nextElement)
     let oldProps = this._currentElement.props;
     let newProps = nextElement.props;
+    this.updateDOMProperties(oldProps, newProps);
+    this.updateDOMChildren(nextElement.props.children)
+  }
+  // 此处要把新的子节点传过来， 和老的子节点进行对比，然后找出差异
+  updateDOMChildren(newChildrenElements) {
+    this.diff(diffQueue, newChildrenElements)
+  }
+  diff(diffQueue, newChildrenElements) {
+    let oldChildrenUnitMap = this.getOldChildrenMap(this._renderedChildrenUnits);
+    let newChildren = this.getNewChildren(oldChildrenUnitMap, newChildrenElements);
+
+  }
+  getNewChildren(oldChildrenUnitMap, newChildrenElements) {
+    let newChildren = [];
+    newChildrenElements.forEach((newElement, index) => {
+      let newKey = (newElement.props && newElement.props.key) || index.toString();
+      let oldUnit = oldChildrenUnitMap[newKey]; // 老的unit
+      let oldElement = oldUnit && oldUnit._currentElement;    // 获取老元素
+      if (shouldDeepCompare(oldElement, newElement)) {
+        oldUnit.update(newElement);
+        newChildren.push(oldUnit)
+      } else {
+        let nextUnit = createUnit(newElement);
+        newChildren.push(nextUnit);
+      }
+
+
+    })
+    return newChildren;
+  }
+  getOldChildrenMap(childrenUnits = []) {
+    let map = {};
+    for (let i = 0; i < childrenUnits.length; i++) {
+      let unit = childrenUnits[i];
+      let key = (unit._currentElement.props && unit._currentElement.props.key) || i.toString();
+      map[key] = unit;
+    }
+    return map;
+  }
+  updateDOMProperties(oldProps, newProps) {
+    let propName;
+    for (propName in oldProps) {
+      if (!newProps.hasOwnProperty(propName)) {
+        $(`[data-reactid="${this._reactid}"]`).removeAttr(propName)
+      } 
+      if (/^on[A-Z]/.test(propName)) {
+        $(document).undelegate(`.${this._reactid}`)
+      }
+    }
+    for (propName in newProps) {
+      if (propName === 'children') {  // 如果是子组件
+        continue;
+      } else if (/^on[A-Z]/.test(propName)) {
+        let eventName = propName.slice(2).toLowerCase();
+        $(document).delegate(`[data-reactid="${this._reactid}"]`, `${eventName}.${this._reactid}`, newProps[propName])
+      } else if (propName === 'className') {
+        //$(`[data-reactid="${this._reactid}"]`)[0].className = newProps[propName];
+        $(`[data-reactid="${this._reactid}"]`).attr('class', newProps[propName])
+      }else if (propName === 'style') {
+        let styleObj = newProps[propName];
+        Object.entries(styleObj).map(([attr, value]) => {
+          $(`[data-reactid="${this._reactid}"]`).css(attr, value)
+        })
+      } else {
+        $(`[data-reactid="${this._reactid}"]`).props(propName, newProps[propName])
+      }
+    }
   }
   getMarkUp(reactid) {
     this._reactid = reactid;
@@ -52,7 +122,7 @@ class NativeUnit extends Unit {
     let tagStart = `<${type} data-reactid="${this._reactid}"`;
     let childString = '';
     let tagEnd = `</${type}>`;
-
+    this._renderedChildrenUnits = []
     for (let propName in props) {
       if (/^on[A-Z]/.test(propName)) { // 绑定事件了
         let eventName = propName.slice(2).toLowerCase();
@@ -70,10 +140,13 @@ class NativeUnit extends Unit {
       } else if (propName === 'className') { // 如果是一个类名
         tagStart += (`class="${props[propName]}" `)
       } else if (propName === 'children') {
-        let children = props[propName]
+        let children = props[propName],
+          childUnit,
+          childMarkUp;
         children.forEach((child, index) => {
-          let childUnit = createUnit(child); // 
-          let childMarkUp = childUnit.getMarkUp(`${this._reactid}.${index}`);
+          childUnit = createUnit(child); // 
+          this._renderedChildrenUnits.push(childUnit)
+          childMarkUp = childUnit.getMarkUp(`${this._reactid}.${index}`);
           childString += childMarkUp;
           //console.log(childString)
         })
@@ -99,7 +172,7 @@ class CompositeUnit extends Unit {
     }
     // 下面要进行比较更新了  先得到上次渲染的单元
     let preRenderedUnitInstance = this._renderedUnitInstance
-    console.log(preRenderedUnitInstance)
+    //console.log(preRenderedUnitInstance)
     let preRenderedElement = preRenderedUnitInstance._currentElement
     let nextRenderElement = this._componentInstance.render()
     // 如果新旧两个元素类型一样，则可以进行深度比较，如果不一样，直接干掉老的元素，新建新的元素

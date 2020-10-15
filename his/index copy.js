@@ -1,4 +1,4 @@
-import React from './src/react';
+import React from '../src/react';
 // jsx浏览器不能识别和运行， 要靠babel转换成javascript
 function sayHello() {
   alert('hello')

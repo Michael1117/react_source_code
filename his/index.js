@@ -21,15 +21,16 @@ class Counter extends React.Component{
   componentDidUpdate() {
     console.log('Counter componentDidUpdate')
   }
-  handleClick = () => {
-    this.setState({number: this.state.number + 1})
-  }
-  render() {
-    //console.log('render')
-    let p = React.createElement('p', { },  this.state.number);
-    let button = React.createElement('button', {onClick: this.handleClick}, '+')
-    return React.createElement('div', {style:{backgroundColor: this.state.number % 2 == 0 ? "red":"green"}}, p, button)
+ /*  increment = () => {
     
+    return this.state.number;
+  } */
+  render() {
+    console.log('render')
+   /*  let p = React.createElement('p', { style: {color: 'red'}}, this.props.name,  this.state.number);
+    let button = React.createElement('button', {onClick: this.increment}, '+')
+    return React.createElement('div', {id:'counter'}, p, button) */
+    return this.state.number;
   }
 }
 
